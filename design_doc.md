@@ -21,7 +21,15 @@ There are a couple of goals:
 
 ## 2. Functions 
 
+`utils.py`
+- A 
 
+`main.py`
+- A
 
+`prompt.py`
+- A
 
-> 
+`eda.ipynb`
+- A
+
