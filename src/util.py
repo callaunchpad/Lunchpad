@@ -45,17 +45,17 @@ def find_closest(dict_ingredients, my_cluster):
     A = np.transpose(start)
     Q = np.zeros(A.shape) ##does not do the edge case of linearly dependent shit ##TODO!!
     for k in range(A.shape[1]):
-    avec = A[:, k]
-    q = avec
-    for j in range(k):
-        q = q - np.dot(avec, Q[:,j])*Q[:,j]
+        avec = A[:, k]
+        q = avec
+        for j in range(k):
+            q = q - np.dot(avec, Q[:,j])*Q[:,j]
     
     Q[:, k] = q/np.linalg.norm(q) 
     
     ##find the dot product sum
     Q = Q.T ##columns are rows
     running = 0
-    best_tuple = (,)
+    best_tuple = (-float('inf'), -float('inf'))
     
     for tup in dict_ingredients:
         vec = tup[1]
