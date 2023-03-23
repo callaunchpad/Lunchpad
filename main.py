@@ -66,12 +66,6 @@ def main():
     image_transf = transform(image)
     image_tensor = to_input_transf(image_transf).unsqueeze(0).to(device)
 
-    plt.imshow(image_transf)
-    plt.axis('off')
-    plt.show()
-    plt.close()
-    num_valid = 1
-
     #FIXME: Run model inference on original image
 
     for i in range(numgens):
@@ -115,8 +109,19 @@ def main():
         
         recipe_name_new = outs['title']
         ingredients_new = outs['ingrs']
+        recipe = outs['recipe']
 
 
     #FIXME: Print out output/display new image onto terminal
 
+    plt.imshow(image_transf_new)
+    plt.axis('off')
+    plt.show()
+    plt.close()
+
+    print('TITLE:',recipe_name_new)
+    print('\nINGREDIENTS:')
+    print(', '.join(ingredients_new))
+    print('\nINSTRUCTIONS:')
+    print('-' + '\n-'.join(recipe))
     
