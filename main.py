@@ -10,7 +10,9 @@ from torchvision import transforms
 from utils.output_utils import prepare_output
 from PIL import Image
 import time
-from diffusers import StableDiffusionPipeline
+from diffusers import StableDiffusionPipeline, StableDiffusionImg2ImgPipeline
+import requests
+from io import BytesIO
 
 #FIXME: Set up argparser + arguments
 
@@ -20,7 +22,7 @@ def main():
 
     data_dir = '../data' #path to vocab and model checkpoint
 
-    use_gpu = False #running on gpu or cpu
+    use_gpu = True #running on gpu or cpu
     device = torch.device('cuda' if torch.cuda.is_available() and use_gpu else 'cpu')
     map_loc = None if torch.cuda.is_available() and use_gpu else 'cpu'
 
@@ -66,62 +68,109 @@ def main():
     image_transf = transform(image)
     image_tensor = to_input_transf(image_transf).unsqueeze(0).to(device)
 
-    #FIXME: Run model inference on original image
+    option = input("Do you want to use the text to image option (1) or the image to image option (2)?")
+    if (option == "1"):
 
-    for i in range(numgens):
-        with torch.no_grad():
-            outputs = model.sample(image_tensor, greedy=greedy[i], 
-                                   temperature=temperature, beam=beam[i], true_ingrs=None)
+        #FIXME: Run model inference on original image
+
+        for i in range(numgens):
+            with torch.no_grad():
+                outputs = model.sample(image_tensor, greedy=greedy[i], 
+                                    temperature=temperature, beam=beam[i], true_ingrs=None)
+                
+            ingr_ids = outputs['ingr_ids'].cpu().numpy()
+            recipe_ids = outputs['recipe_ids'].cpu().numpy()
+                
+            outs, valid = prepare_output(recipe_ids[0], ingr_ids[0], ingrs_vocab, vocab)
             
-        ingr_ids = outputs['ingr_ids'].cpu().numpy()
-        recipe_ids = outputs['recipe_ids'].cpu().numpy()
+            recipe_name = outs['title']
+            ingredients = outs['ingrs']
+
+
+        #FIXME: Create hardcoded StableDiffusion prompt   
+
+        prompt = "Fancy food plating of " + recipe_name + " with ingredients " + ingredients
+
+        #FIXME: Use StableDiffusion to generate new image
+
+        pipe = StableDiffusionPipeline.from_pretrained('CompVis/stable-diffusion-v1-4').to('cuda')
+
+        new_image = pipe(prompt).images[0]
+
+        #FIXME: Run model inference on new image
+
+        image_transf_new = transform(new_image)
+        image_tensor_new = to_input_transf(image_transf_new).unsqueeze(0).to(device)
+
+        for i in range(numgens):
+            with torch.no_grad():
+                outputs = model.sample(image_tensor_new, greedy=greedy[i], 
+                                    temperature=temperature, beam=beam[i], true_ingrs=None)
+                
+            ingr_ids = outputs['ingr_ids'].cpu().numpy()
+            recipe_ids = outputs['recipe_ids'].cpu().numpy()
+                
+            outs, valid = prepare_output(recipe_ids[0], ingr_ids[0], ingrs_vocab, vocab)
             
-        outs, valid = prepare_output(recipe_ids[0], ingr_ids[0], ingrs_vocab, vocab)
-        
-        recipe_name = outs['title']
-        ingredients = outs['ingrs']
+            recipe_name_new = outs['title']
+            ingredients_new = outs['ingrs']
+            recipe = outs['recipe']
 
 
-    #FIXME: Create hardcoded StableDiffusion prompt
+        #FIXME: Print out output/display new image onto terminal
 
-    prompt = "Fancy food plating of " + recipe_name + " with ingredients " + ingredients
+        plt.imshow(image_transf_new)
+        plt.axis('off')
+        plt.show()
+        plt.close()
 
-    #FIXME: Use StableDiffusion to generate new image
+        print('TITLE:',recipe_name_new)
+        print('\nINGREDIENTS:')
+        print(', '.join(ingredients_new))
+        print('\nINSTRUCTIONS:')
+        print('-' + '\n-'.join(recipe))
 
-    pipe = StableDiffusionPipeline.from_pretrained('CompVis/stable-diffusion-v1-4').to('cuda')
+    elif (option == "2"):
 
-    new_image = pipe(prompt).images[0]
+        # all the img2img stuff (does it run? no clue.)
 
-    #FIXME: Run model inference on new image
+        model_id_or_path = "runwayml/stable-diffusion-v1-5"
+        pipe = StableDiffusionImg2ImgPipeline.from_pretrained(model_id_or_path, torch_dtype=torch.float16)
+        pipe = pipe.to(device)
+        prompt = "A fancy plating of this food"
+        images = pipe(prompt=prompt, image=image, strength=0.8, guidance_scale=7.5).images
+        fancy_img = images[0]
 
-    image_transf_new = transform(new_image)
-    image_tensor_new = to_input_transf(image_transf_new).unsqueeze(0).to(device)
+        # now take that fancy image and run it through inv cooking
 
-    for i in range(numgens):
-        with torch.no_grad():
-            outputs = model.sample(image_tensor_new, greedy=greedy[i], 
-                                   temperature=temperature, beam=beam[i], true_ingrs=None)
+        fancy_img_transf = transform(fancy_img)
+        fancy_img_tensor = to_input_transf(fancy_img_transf).unsqueeze(0).to(device)
+
+        for i in range(numgens):
+            with torch.no_grad():
+                outputs = model.sample(fancy_img_tensor, greedy=greedy[i], 
+                                    temperature=temperature, beam=beam[i], true_ingrs=None)
+                
+            ingr_ids = outputs['ingr_ids'].cpu().numpy()
+            recipe_ids = outputs['recipe_ids'].cpu().numpy()
+                
+            outs, valid = prepare_output(recipe_ids[0], ingr_ids[0], ingrs_vocab, vocab)
             
-        ingr_ids = outputs['ingr_ids'].cpu().numpy()
-        recipe_ids = outputs['recipe_ids'].cpu().numpy()
-            
-        outs, valid = prepare_output(recipe_ids[0], ingr_ids[0], ingrs_vocab, vocab)
-        
-        recipe_name_new = outs['title']
-        ingredients_new = outs['ingrs']
-        recipe = outs['recipe']
+            recipe_name = outs['title']
+            ingredients = outs['ingrs']
+            recipe = outs['recipe']
 
+        # print that shit
 
-    #FIXME: Print out output/display new image onto terminal
+        plt.imshow(image_transf_new)
+        plt.axis('off')
+        plt.show()
+        plt.close()
 
-    plt.imshow(image_transf_new)
-    plt.axis('off')
-    plt.show()
-    plt.close()
+        print('TITLE:',recipe_name)
+        print('\nINGREDIENTS:')
+        print(', '.join(ingredients))
+        print('\nINSTRUCTIONS:')
+        print('-' + '\n-'.join(recipe))
 
-    print('TITLE:',recipe_name_new)
-    print('\nINGREDIENTS:')
-    print(', '.join(ingredients_new))
-    print('\nINSTRUCTIONS:')
-    print('-' + '\n-'.join(recipe))
     
