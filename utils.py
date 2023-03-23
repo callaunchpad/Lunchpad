@@ -54,7 +54,7 @@ def find_closest(dict_ingredients, my_cluster):
     
     ##find the dot product sum
     Q = Q.T ##columns are rows
-    running = 0
+    running = float('-inf')
     best_tuple = (,)
     
     for tup in dict_ingredients:
@@ -69,4 +69,22 @@ def find_closest(dict_ingredients, my_cluster):
         if (a > running):
             best_tuple = tup
             running = a
-    return best_tuple
+            
+    ##this is if we need to find furthest could just update paramaters or make a whole new function forgot we had to do this highkey
+    running = float('inf')
+    best_tup = (,)
+    
+    for tup in dict_ingredients:
+        vec = tup[1]
+        vec = vec.T
+        a = 0
+        
+        for i in range(Q.shape[0]):
+            a = a + np.dot(vec, Q[i])
+        a = a / Q.shape[0]
+        
+        if (a < running):
+            best_tup = tup
+            running = a
+    
+    return best_tuple ##best_tup for furthest again read above for functional changes 
