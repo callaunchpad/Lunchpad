@@ -162,7 +162,7 @@ def main():
 
         # print that shit
 
-        plt.imshow(image_transf_new)
+        plt.imshow(fancy_img_transf)
         plt.axis('off')
         plt.show()
         plt.close()
