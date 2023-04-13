@@ -23,7 +23,8 @@ def final_inv_cook():
     # new_image = torch.load('/home/sebbyzhao/Lunchpad/data/new/new_image.pt')
     with open('/home/sebbyzhao/Lunchpad/data/new_image.pt', 'rb') as pickle_file:
         new_image = pickle.load(pickle_file)
-
+        ingredients = pickle.load(pickle_file)
+        
     data_dir = 'data' #path to vocab and model checkpoint
 
     use_gpu = True #running on gpu or cpu
@@ -73,7 +74,7 @@ def final_inv_cook():
     for i in range(numgens):
         with torch.no_grad():
             outputs = model.sample(image_tensor_new, greedy=greedy[i], 
-                                   temperature=temperature, beam=beam[i], true_ingrs=None)
+                                   temperature=temperature, beam=beam[i], true_ingrs=ingredients)
             
         ingr_ids = outputs['ingr_ids'].cpu().numpy()
         recipe_ids = outputs['recipe_ids'].cpu().numpy()

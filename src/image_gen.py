@@ -89,7 +89,7 @@ def image_gen(arg):
         outs, valid = prepare_output(recipe_ids[0], ingr_ids[0], ingrs_vocab, vocab)
         
         recipe_name = outs['title']
-        ingredients = outs['ingrs']
+        ingredients = outs['ingrs'] # ingredient list
 
 
     #FIXME: Create hardcoded StableDiffusion prompt
@@ -98,10 +98,12 @@ def image_gen(arg):
     prompt = "Fancy food plating of " + recipe_name + " with ingredients " + ingredients
     print(prompt)
 
+    # goal: save ingredient latent vector
+    torch.save(ingredient_latent_vector)
     with open('/home/sebbyzhao/Lunchpad/data/prompt.pt', 'wb') as pickle_file:
         pickle.dump(prompt, pickle_file)
-    
-
+        pickle.dump(ingredients, pickle_file)
+        pickle.dump(image, pickle_file)
     
 
     
