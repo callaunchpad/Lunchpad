@@ -1,12 +1,9 @@
-import matplotlib.pyplot as plt
 import pkg_resources
 pkg_resources.require("torch==0.4.1")
 import torch
-import torch.nn as nn
 import numpy as np
 import os
 import pickle
-# from args import get_parser
 import argparse
 from argparse import Namespace
 import pickle
@@ -26,6 +23,7 @@ parser.add_argument("-i", "--image", metavar="IMAGE_FLIP", help = "Path to your 
 parser.add_argument("--save_images", help="Directory to save generated images")
 
 def image_gen(arg):
+    root_dir = os.path.abspath(os.getcwd())
     data_dir = 'data' #path to vocab and model checkpoint
 
     use_gpu = True #running on gpu or cpu
@@ -99,8 +97,10 @@ def image_gen(arg):
     print(prompt)
 
     # goal: save ingredient latent vector
-    torch.save(ingredient_latent_vector)
-    with open('/home/sebbyzhao/Lunchpad/data/prompt.pt', 'wb') as pickle_file:
+    with open(os.path.join(root_dir, data_dir, 'ingredients.npy'), 'wb') as f:
+        np.save(f, ingr_ids)
+    
+    with open(os.path.join(root_dir, data_dir, 'prompt.pt'), 'wb') as pickle_file:
         pickle.dump(prompt, pickle_file)
         pickle.dump(ingredients, pickle_file)
         pickle.dump(image, pickle_file)

@@ -1,14 +1,16 @@
-import sys
 import torch
-import torch.nn as nn
 from diffusers import StableDiffusionPipeline, StableDiffusionImg2ImgPipeline
 import pickle
+from PIL import Image
+import os
 
+root_dir = os.path.abspath(os.getcwd())
+data_dir = 'data'
 
 def text_to_image():
 
     #FIXME: Use StableDiffusion to generate new image
-    with open('/home/sebbyzhao/Lunchpad/data/prompt.pt', 'rb') as pickle_file:
+    with open(os.path.join(root_dir, data_dir, 'prompt.pt'), 'rb') as pickle_file:
         prompt = pickle.load(pickle_file)
     # prompt = pickle.load('home/sebbyzhao/Lunchpad/data/prompt.pt')
     pipe = StableDiffusionPipeline.from_pretrained('CompVis/stable-diffusion-v1-4').to('cuda')
@@ -16,14 +18,12 @@ def text_to_image():
     new_image = pipe(prompt).images[0]
 
     # Save file smwhere.
-    with open('/home/sebbyzhao/Lunchpad/data/new_image.pt', 'wb') as pickle_file:
-        prompt = pickle.dump(new_image, pickle_file)
-    # torch.save(new_image, '/home/sebbyzhao/Lunchpad/data/new/new_image.pt')
+    new_image.save('data/new_image.jpg')
 
 def img_to_img():
 
     #FIXME: Use StableDiffusion to generate new image
-    with open('/home/sebbyzhao/Lunchpad/data/prompt.pt', 'rb') as pickle_file:
+    with open(os.path.join(root_dir, data_dir, 'prompt.pt'), 'rb') as pickle_file:
         prompt = pickle.load(pickle_file)
         image = pickle.load(pickle_file)
     # prompt = pickle.load('home/sebbyzhao/Lunchpad/data/prompt.pt')
@@ -34,9 +34,7 @@ def img_to_img():
     new_image = images[0]
 
     # Save file smwhere.
-    with open('/home/sebbyzhao/Lunchpad/data/new_image.pt', 'wb') as pickle_file:
-        prompt = pickle.dump(new_image, pickle_file)
-    # torch.save(new_image, '/home/sebbyzhao/Lunchpad/data/new/new_image.pt')
+    new_image.save('data/new_image.jpg')
 
 if __name__ == '__main__':
     text_to_image()

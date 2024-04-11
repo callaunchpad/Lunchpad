@@ -1,12 +1,8 @@
-# import matplotlib.pyplot as plt
-import plotext as plt
 import pkg_resources
 pkg_resources.require("torch==0.4.1")
 import torch
-import torch.nn as nn
 import numpy as np
 import os
-# from args import get_parser
 import argparse
 from argparse import Namespace
 import pickle
@@ -15,17 +11,15 @@ from torchvision import transforms
 from utils.output_utils import prepare_output
 from PIL import Image
 import time
-import sys
-import webbrowser
 
 def final_inv_cook():
-
-    # new_image = torch.load('/home/sebbyzhao/Lunchpad/data/new/new_image.pt')
-    with open('/home/sebbyzhao/Lunchpad/data/new_image.pt', 'rb') as pickle_file:
-        new_image = pickle.load(pickle_file)
-        ingredients = pickle.load(pickle_file)
-        
+    root_dir = os.path.abspath(os.getcwd())
     data_dir = 'data' #path to vocab and model checkpoint
+
+    with open(os.path.join(root_dir, data_dir, 'ingredients.npy'), 'rb') as f:
+        ingredients = np.load(f)
+    ingredients = torch.from_numpy(ingredients)
+    new_image = Image.open(os.path.join(root_dir, data_dir, 'new_image.jpg'))
 
     use_gpu = True #running on gpu or cpu
     device = torch.device('cuda' if torch.cuda.is_available() and use_gpu else 'cpu')
@@ -71,6 +65,8 @@ def final_inv_cook():
     image_transf_new = transform(new_image)
     image_tensor_new = to_input_transf(image_transf_new).unsqueeze(0).to(device)
 
+    ingredients = ingredients.to(device)
+
     for i in range(numgens):
         with torch.no_grad():
             outputs = model.sample(image_tensor_new, greedy=greedy[i], 
@@ -85,13 +81,6 @@ def final_inv_cook():
         ingredients_new = outs['ingrs']
         recipe = outs['recipe']
 
-
-    #FIXME: Print out output/display new image onto terminal
-
-    image_transf_new.save('/home/sebbyzhao/Lunchpad/data/new_image.jpg')
-    # webbrowser.open('/home/sebbyzhao/Lunchpad/data/new_image.jpg')
-    # plt.axis('off')
-    # plt.close()
 
     print('TITLE:',recipe_name_new)
     print('\nINGREDIENTS:')
